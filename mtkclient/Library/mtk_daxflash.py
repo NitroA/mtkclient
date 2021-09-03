@@ -11,7 +11,6 @@ from mtkclient.Library.utils import LogBase, progress, logsetup
 from mtkclient.Library.error import ErrorHandler
 from mtkclient.Library.daconfig import EMMC_PartitionType, UFS_PartitionType, DaStorage
 from mtkclient.Library.partition import Partition
-from mtkclient.Library.rw_patch import write32, read32
 from mtkclient.Library.hwcrypto import crypto_setup, hwcrypto
 from mtkclient.config.payloads import pathconfig
 
