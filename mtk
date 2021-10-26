@@ -704,8 +704,10 @@ class Main(metaclass=LogBase):
                     self.close()
                 if parttype == "user" or parttype is None:
                     i = 0
+                    countDump = 0;
                     self.info("Requesting available partitions ....")
                     gpttable = mtk.daloader.get_partition_data(self.args, parttype=parttype)
+                   
                     for partition in partitions:
                         partfilename = filenames[i]
                         i += 1
@@ -716,6 +718,7 @@ class Main(metaclass=LogBase):
                             continue
                         else:
                             rpartition = None
+                            
                             for gptentry in gpttable:
                                 if gptentry.name.lower() == partition.lower():
                                     rpartition = gptentry
@@ -727,23 +730,39 @@ class Main(metaclass=LogBase):
                                                           filename=partfilename, parttype=parttype):
                                     self.info(f"Dumped sector {str(rpartition.sector)} with sector count " +
                                               f"{str(rpartition.sectors)} as {partfilename}.")
+                                    countDump += 1
                                 else:
                                     self.info(f"Failed to dump sector {str(rpartition.sector)} with sector count " +
                                               f"{str(rpartition.sectors)} as {partfilename}.")
+                                    countDump -= 1
+
+                            
                             else:
                                 self.error(f"Error: Couldn't detect partition: {partition}\nAvailable partitions:")
                                 for rpartition in gpttable:
                                     self.info(rpartition.name)
+
+
+                    if (countDump > 1 and countDump == len(filenames)):
+                          print(f"All partitions was dumped")
+                    elif (countDump > 1 and countDump != len(filenames)):
+                          print(f"Failed to dump some partition")
+
                 else:
                     i = 0
+                    
                     for partfilename in filenames:
                         pos = 0
                         if mtk.daloader.readflash(addr=pos, length=0xFFFFFFFF, filename=partfilename,
                                                   parttype=parttype):
-                            print(f"Dumped partition {str(partitionname)} as {partfilename}.")
+                           
+                            print(f"Dumped partition xxx {str(partitionname)} as {partfilename}.")
                         else:
                             print(f"Failed to dump partition {str(partitionname)} as {partfilename}.")
                         i += 1
+
+                    
+
                 self.close()
             elif cmd == "rl":
                 directory = self.args.directory
