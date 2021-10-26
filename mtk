@@ -744,9 +744,9 @@ class Main(metaclass=LogBase):
 
 
                     if (countDump > 1 and countDump == len(filenames)):
-                          print(f"All partitions was dumped")
+                          self.info(f"All partitions was dumped")
                     elif (countDump > 1 and countDump != len(filenames)):
-                          print(f"Failed to dump some partition")
+                          self.info(f"Failed to dump some partition")
 
                 else:
                     i = 0
