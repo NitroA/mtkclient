@@ -1,10 +1,7 @@
 import sys
 import time
-import mtk
-from mtkclient.Library.mtk_da_cmd import DA_handler
 import mock
 import logging
-
 import ctypes
 from PyQt5.QtCore import *
 from PyQt5.QtGui import QTextOption, QPixmap, QTransform, QIcon
@@ -14,7 +11,13 @@ from gui.toolsMenu import *
 from gui.toolkit import *
 import traceback
 import math
-
+import warnings
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore",category=DeprecationWarning)
+    import imp
+mtk = imp.load_source('mtk', 'mtk')  #import mtk
+from mtkclient.Library.mtk_da_cmd import DA_handler
+# Fixes by @marat2509
 # TO do Move all GUI modifications to signals!
 
 class guiLogger:
