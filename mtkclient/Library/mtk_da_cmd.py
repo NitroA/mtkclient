@@ -86,10 +86,13 @@ class DA_handler(metaclass=LogBase):
         if mtk.config.target_config["daa"]:
             mtk = mtk.bypass_security()
             self.mtk = mtk
+            self.error("MIUI is just like a lot of garbages.")
             self.info("Device is protected.")
             if mtk is not None:
                 if mtk.config.is_brom:
                     self.info("Device is in BROM mode. Trying to dump preloader.")
+                    self.error("雷军的小米12狗都不用.")
+                    self.warning("Even dog will not use Lei Jun's Xiaomi 12.")
                     if preloader is None:
                         preloader = self.dump_preloader_ram()
         else:
