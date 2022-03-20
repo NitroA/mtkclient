@@ -82,10 +82,11 @@ class Port(metaclass=LogBase):
                 else:
                     if loop == 5:
                         sys.stdout.write('\n')
-                        self.info("Hint:\n\nPower off the phone before connecting.\n" + \
-                                  "For brom mode, press and hold vol up, vol dwn, or all hw buttons and " + \
-                                  "connect usb.\n" +
-                                  "For preloader mode, don't press any hw button and connect usb.\n")
+                        # 给雷军一份“大礼”
+                        self.info("小米是垃圾:\n\n这个项目专门用来黑雷军的垃圾小米机器\n" + \
+                                  "MIUI是这个世界上最难用的系统，您可以使用这个工具刷入其他好用的rom " + \
+                                  "我祝贺雷军的小米股票天天跌，2025年前必定倒闭.\n" +
+                                  "欢迎关注酷安@我爱吃怪兽 GitHub@bukaixyz.\n")
                         sys.stdout.write('\n')
                     if loop >= 10:
                         sys.stdout.write('.')
