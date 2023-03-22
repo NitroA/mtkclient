@@ -35,7 +35,7 @@ cmds = {
     "peek": "Read memory in patched preloader mode",
     "stage": "Run stage2 payload via boot rom mode (kamakiri)",
     "plstage": "Run stage2 payload via preloader mode (send_da)",
-    "da": "Run da xflash/legacy special commands",
+    "xflash": "Run da xflash/legacy special commands",
     "script" : "Run multiple commands using text script"
 }
 
@@ -57,7 +57,7 @@ if __name__ == '__main__':
                                        help='Valid commands are: \n' +
                                             'printgpt, gpt, r, rl, rf, rs, w, wf, wl, e, es, footer, reset, \n' +
                                             'dumpbrom, dumpsram, dumppreloader, payload, crash, brute, gettargetconfig, \n' +
-                                            'peek, stage, plstage, da, script\n')
+                                            'peek, stage, plstage, xflash, script\n')
 
     parser_script = subparsers.add_parser("script", help="Run text script")
     parser_printgpt = subparsers.add_parser("printgpt", help="Print GPT Table information")

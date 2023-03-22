@@ -207,7 +207,7 @@ python mtk payload --metamode FASTBOOT
 Example:
 
 ```
-python mtk da efuse
+python mtk xflash efuse
 ```
 
 ### Unlock bootloader
@@ -219,11 +219,11 @@ python mtk e metadata,userdata,md_udc
 
 2. Unlock bootloader:
 ```
-python mtk da seccfg unlock
+python mtk xflash seccfg unlock
 ```
 for relocking use:
 ```
-python mtk da seccfg lock
+python mtk xflash seccfg lock
 ```
 
 3. Reboot the phone:
@@ -323,36 +323,36 @@ Erase boot sectors
 python mtk es boot [sector count]
 ```
 
-### DA commands:
+### XFLASH commands:
 
 Peek memory
 ```
-python mtk da peek [addr in hex] [length in hex] [optional: -filename filename.bin for reading to file]
+python mtk xflash peek [addr in hex] [length in hex] [optional: -filename filename.bin for reading to file]
 ```
 
 Poke memory
 ```
-python mtk da peek [addr in hex] [data as hexstring or -filename for reading from file]
+python mtk xflash peek [addr in hex] [data as hexstring or -filename for reading from file]
 ```
 
 Read rpmb (Only xflash for now)
 ```
-python mtk da rpmb r [will read to rpmb.bin]
+python mtk xflash  rpmb r [will read to rpmb.bin]
 ```
 
 Write rpmb [Currently broken, xflash only]
 ```
-python mtk da rpmb w filename
+python mtk xflash rpmb w filename
 ```
 
 Generate and display rpmb1-3 key
 ```
-python mtk da generatekeys
+python mtk xflash generatekeys
 ```
 
 Unlock / Lock bootloader
 ```
-python mtk da seccfg [lock or unlock]
+python mtk xflash seccfg [lock or unlock]
 ```
 
 ---------------------------------------------------------------------------------------------------------------
