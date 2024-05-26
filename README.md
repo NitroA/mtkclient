@@ -500,9 +500,21 @@ For dxcc, you need to use plstage instead of stage
 
 ## Learning Resources 
 
+![mtk_boot](https://github.com/hopez13/mtkclient/assets/140780838/11b5da3b-21d8-4e5a-b68e-dac45ecb7bf7)
+![boot_with_atf](https://github.com/hopez13/mtkclient/assets/140780838/eff7346b-c250-498c-9d2e-21aca9376499)
+<img width="827" alt="image-20221123141303601" src="https://github.com/hopez13/mtkclient/assets/140780838/4d751738-a8bb-46c1-a798-0e329286ef26">
+
+
 <img width="682" alt="image-20221130231704274" src="https://github.com/bkerler/mtkclient/assets/140780838/706d58d1-72af-4bbf-ae97-44d6cca2b182">
 
 ![image-20221208231856888](https://github.com/bkerler/mtkclient/assets/140780838/002f547a-59ce-4022-b8a2-b67a2dc68db7)
+![image-20221208231928842 (1)](https://github.com/hopez13/mtkclient/assets/140780838/fba4c44c-e602-4abd-8dc4-d2476fabd41f)
+
 ![image-20221208232056511](https://github.com/bkerler/mtkclient/assets/140780838/9ec1ff27-f2d4-4f1a-b32a-6c3c760ca48a)
+![image-20221124222151110 (1)](https://github.com/hopez13/mtkclient/assets/140780838/f429072b-00a8-46a7-be34-fe8206226be9)
 ![image-20221124210054040](https://github.com/bkerler/mtkclient/assets/140780838/ff4d457b-f406-4b23-8cf0-78f7d9d2914a)
+![image-20221124221837757](https://github.com/hopez13/mtkclient/assets/140780838/41346114-0e70-470e-ba80-fe6f98f489cd)
+
+![image-20221208232231058](https://github.com/hopez13/mtkclient/assets/140780838/b1984568-b564-40b4-80af-4852b501a3dc)
+
 
