@@ -509,7 +509,7 @@ class Main(metaclass=LogBase):
 
             if mtk.config.preloader_filename is not None:
                 self.info("Using custom preloader : " + mtk.config.preloader_filename)
-                mtk.preloader.setreg_disablewatchdogtimer(mtk.config.hwcode)
+                mtk.preloader.setreg_disablewatchdogtimer(mtk.config.hwcode, mtk.config.hwver)
                 daaddr, dadata = mtk.parse_preloader(mtk.config.preloader_filename)
                 dadata = mtk.config.preloader = mtk.patch_preloader_security_da1(dadata)
                 if mtk.preloader.send_da(daaddr, len(dadata), 0x100, dadata):
