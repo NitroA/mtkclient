@@ -44,7 +44,6 @@ path = pathconfig()
 #    config.ptype = "kamakiri" #Temp for Mac testing
 MtkTool = Main(variables)
 
-guiState = "welcome"
 phoneInfo = {"chipset": "", "bootMode": "", "daInit": False, "cdcInit": False}
 
 
@@ -165,7 +164,8 @@ class MainWindow(QMainWindow):
             fullPercentageDone = int((doneBytes / totalBytes) * 100)
             self.ui.fullProgress.setValue(fullPercentageDone)
             timeinfototal = self.timeEstTotal.update(fullPercentageDone, 100)
-            self.ui.fullProgressText.setText(f"<table width='100%'><tr><td><b>Total:</b> {convert_size(doneBytes)} / {convert_size(totalBytes)}</td><td align='right'>{timeinfototal}{QCoreApplication.translate('main', ' left')}</td></tr></table>")
+            self.ui.fullProgressText.setText(
+                f"<table width='100%'><tr><td><b>Total:</b> {convert_size(doneBytes)} / {convert_size(totalBytes)}</td><td align='right'>{timeinfototal}{QCoreApplication.translate('main', ' left')}</td></tr></table>")
         else:
             partBytes = self.Status["currentPartitionSize"]
             doneBytes = self.Status["currentPartitionSizeDone"]
@@ -189,28 +189,6 @@ class MainWindow(QMainWindow):
             self.ui.partProgressText.setText(txt)
 
         lock.release()
-
-    def updateStateAsync(self, toolkit, parameters):
-        while not self.Status["done"]:
-            # print(self.dumpStatus)
-            time.sleep(0.1)
-        print("DONE")
-        self.ui.readpreloaderbtn.setEnabled(True)
-        self.ui.readpartitionsbtn.setEnabled(True)
-        self.ui.readboot2btn.setEnabled(True)
-        self.ui.readrpmbbtn.setEnabled(True)
-        self.ui.readflashbtn.setEnabled(True)
-
-        self.ui.writepartbtn.setEnabled(True)
-        self.ui.writeflashbtn.setEnabled(True)
-        self.ui.writeboot2btn.setEnabled(True)
-        self.ui.writepreloaderbtn.setEnabled(True)
-        self.ui.writerpmbbtn.setEnabled(True)
-
-        self.ui.erasepartitionsbtn.setEnabled(True)
-        self.ui.eraseboot2btn.setEnabled(True)
-        self.ui.erasepreloaderbtn.setEnabled(True)
-        self.ui.eraserpmbbtn.setEnabled(True)
 
     @Slot(int)
     def updateProgress(self, progress):
@@ -331,7 +309,8 @@ class MainWindow(QMainWindow):
 
     def getpartitions(self):
         data, guid_gpt = self.devhandler.da_handler.mtk.daloader.get_gpt()
-        self.ui.readtitle.setText(QCoreApplication.translate("main", "Error reading gpt" if guid_gpt is None else "Select partitions to dump"))
+        self.ui.readtitle.setText(QCoreApplication.translate("main",
+                                                             "Error reading gpt" if guid_gpt is None else "Select partitions to dump"))
         readpartitionListWidgetVBox = QVBoxLayout()
         readpartitionListWidget = QWidget(self)
         readpartitionListWidget.setLayout(readpartitionListWidgetVBox)
