@@ -46,18 +46,6 @@ class WriteFlashWindow(QObject):
         thread.sendToProgressSignal.connect(self.parent.updateProgress)
         thread.start()
 
-    def openFile(self, partition, checkbox, lineedit):
-        fname = self.fdialog.open(partition + ".bin")
-        if fname is None:
-            checkbox.setChecked(False)
-            lineedit.setText("")
-            lineedit.setDisabled(True)
-            return ""
-        checkbox.setChecked(True)
-        lineedit.setText(fname)
-        lineedit.setDisabled(False)
-        return fname
-
     def writePartitionAsync(self, toolkit, parameters):
         self.parent.timeEst.init()
         self.parent.timeEstTotal.init()

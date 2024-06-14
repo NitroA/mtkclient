@@ -235,7 +235,7 @@ class xflashext(metaclass=LogBase):
         # Disable security checks
         security_check = find_binary(da2, b"\x01\x23\x03\x60\x00\x20\x70\x47\x70\xB5")
         if security_check:
-            da2patched[security_check:security_check+2]=b"\x00\x23"
+            da2patched[security_check:security_check + 2] = b"\x00\x23"
         # Disable da anti rollback version check
         antirollback = find_binary(da2, int.to_bytes(0xC0020053, 4, 'little'))
         if antirollback:

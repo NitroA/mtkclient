@@ -51,7 +51,6 @@ class META(metaclass=LogBase):
                     EP_IN = cdc.EP_IN.read
                     maxinsize = cdc.EP_IN.wMaxPacketSize
                     while True:
-                        resp = b""
                         try:
                             resp = bytearray(EP_IN(maxinsize))
                         except Exception:

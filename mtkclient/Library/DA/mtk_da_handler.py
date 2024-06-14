@@ -83,7 +83,7 @@ class DA_handler(metaclass=LogBase):
         else:
             if mtk.serialportname is not None:
                 mtk.preloader.init()
-            if mtk.port.cdc.connected and os.path.exists(os.path.join(mtk.config.hwparam_path,".state")):
+            if mtk.port.cdc.connected and os.path.exists(os.path.join(mtk.config.hwparam_path, ".state")):
                 mtk.daloader.reinit()
                 return mtk
         if mtk.config.target_config is None:

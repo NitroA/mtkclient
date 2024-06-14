@@ -4,13 +4,13 @@ import os
 import sys
 from struct import unpack
 import inspect
+
 current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parent_dir = os.path.dirname(os.path.dirname(current_dir))
 sys.path.insert(0, parent_dir)
 from mtkclient.config.payloads import pathconfig
 from mtkclient.Library.utils import read_object
 from mtkclient.Library.utils import find_binary
-
 
 entry_region = [
     ('m_buf', 'I'),
@@ -40,7 +40,7 @@ def main():
     da_setup = []
     loaders = []
     pc = pathconfig()
-    if len(sys.argv)>1:
+    if len(sys.argv) > 1:
         loaders.append(sys.argv[1])
     else:
         for root, dirs, files in os.walk(pc.get_loader_path(), topdown=False):
@@ -116,7 +116,7 @@ def main():
                 bootldr.seek(da[2]["m_buf"])
                 tt = bootldr.read(da[2]["m_len"])
                 idx = tt.find(bytes.fromhex("70BB442D27D244A7"))
-                #idx = tt.find(bytes.fromhex("01279360D36013615361"))
+                # idx = tt.find(bytes.fromhex("01279360D36013615361"))
                 if idx != -1:
                     print("V3 Enabled")
                 bootldr.seek(da[3]["m_buf"])

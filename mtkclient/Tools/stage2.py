@@ -330,7 +330,6 @@ class Stage2(metaclass=LogBase):
         # self.usbwrite(pack(">I", 0x3001))
 
         bytesread = 0
-        old = 0
         bytestoread = sectors * 0x100
         count = sectors
         pg = progress(pagesize=0x200)
@@ -382,7 +381,7 @@ class Stage2(metaclass=LogBase):
                     self.config.set_meid(meid)
                     self.info(f"MEID        : {hexlify(meid).decode('utf-8')}")
                     retval["meid"] = hexlify(meid).decode('utf-8')
-            except Exception as err:
+            except Exception:
                 pass
         if socid is not None:
             self.info(f"SOCID        : {hexlify(socid).decode('utf-8')}")
@@ -394,7 +393,7 @@ class Stage2(metaclass=LogBase):
                     self.config.set_socid(socid)
                     self.info(f"SOCID        : {hexlify(socid).decode('utf-8')}")
                     retval["socid"] = hexlify(socid).decode('utf-8')
-            except Exception as err:
+            except Exception:
                 pass
         if self.setup.dxcc_base is not None and mode not in ["sej_aes_decrypt", "sej_aes_encrypt", "sej_sst_decrypt",
                                                              "sej_sst_encrypt", "dxcc_sha256"]:
@@ -491,12 +490,10 @@ def getint(valuestr):
         return None
     try:
         return int(valuestr)
-    except Exception as err:
-        err = err
+    except Exception:
         try:
             return int(valuestr, 16)
-        except Exception as err:
-            err = err
+        except Exception:
             pass
     return 0
 
@@ -662,7 +659,6 @@ def main():
             else:
                 print(f"Failed to write data to {hex(start)}.")
         elif cmd == "keys":
-            keyinfo = ""
             data = b""
             if args.mode in ["sej_aes_decrypt", "sej_aes_encrypt", "sej_sst_decrypt", "sej_sst_encrypt"]:
                 if not args.data:

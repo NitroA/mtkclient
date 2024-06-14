@@ -6,7 +6,6 @@ import sys
 
 def extract_emi(data):
     idx = data.find(b"\x4D\x4D\x4D\x01\x38\x00\x00\x00")
-    siglen = 0
     if idx != -1:
         data = data[idx:]
         mlen = unpack("<I", data[0x20:0x20 + 4])[0]

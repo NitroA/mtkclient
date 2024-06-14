@@ -19,7 +19,6 @@ from mtkclient.Library.thread_handling import writedata
 from queue import Queue
 from threading import Thread
 
-
 rq = Queue()
 
 
@@ -450,8 +449,8 @@ class DAXFlash(metaclass=LogBase):
         data = self.send_devctrl(self.Cmd.GET_CHIP_ID)
         if data != b"":
             chipid.hw_code, chipid.hw_sub_code, chipid.hw_version, chipid.sw_version, chipid.chip_evolution = unpack(
-            "<HHHHH",
-            data[:(5 * 2)])
+                "<HHHHH",
+                data[:(5 * 2)])
             status = self.status()
             if status == 0:
                 self.info("HW-CODE         : 0x%X" % chipid.hw_code)
@@ -1188,7 +1187,8 @@ class DAXFlash(metaclass=LogBase):
                             if status == 0x0 and unpack("<I", ret)[0] == 0xA1A2A3A4:
                                 self.info("DA Extensions successfully added")
                                 self.daext = True
-                                self.config.hwparam = hwparam(self.mtk.config, self.mtk.config.meid, self.mtk.config.hwparam_path)
+                                self.config.hwparam = hwparam(self.mtk.config, self.mtk.config.meid,
+                                                              self.mtk.config.hwparam_path)
                                 self.config.hwparam.writesetting("hwcode", hex(self.config.hwcode))
                         if not self.daext:
                             self.warning("DA Extensions failed to enable")

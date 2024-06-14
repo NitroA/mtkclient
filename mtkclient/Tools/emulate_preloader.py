@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# (c) B.Kerler 2021
+# (c) B.Kerler 2024
 
 import logging
 from unicorn import (Uc, UC_MEM_WRITE, UC_MEM_READ, UC_MEM_FETCH, UC_MEM_READ_UNMAPPED,
