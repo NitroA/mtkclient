@@ -1115,7 +1115,7 @@ hwconfig = {
         socid_addr=0x102BA8,
         efuse_addr=0x11cb0000,
         damode=DAmodes.XFLASH,
-        dacode=0x1066,
+        dacode=0x6781,
         name="MT6781",
         description="Helio G96",
         loader="mt6781_payload.bin"
@@ -1471,7 +1471,7 @@ hwconfig = {
         damode=DAmodes.XML,
         dacode=0x1172,
         name="MT6895",
-        description="Dimensity 8100"
+        description="Dimensity 8200"
         # loader="mt6893_payload.bin"
     ),
     # MT6789 Oppo Realme 10 / Gigaset GX4

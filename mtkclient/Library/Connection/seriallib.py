@@ -4,11 +4,14 @@
 import time
 import sys
 import logging
+from queue import Queue
+
 from mtkclient.Library.DA.xml.xml_param import max_xml_data_length
 import serial
 import serial.tools.list_ports
 import inspect
 from mtkclient.Library.Connection.devicehandler import DeviceClass
+
 if sys.platform != "win32":
     import termios
 
@@ -28,6 +31,7 @@ class SerialClass(DeviceClass):
         super().__init__(loglevel, portconfig, devclass)
         self.is_serial = True
         self.device = None
+        self.queue = Queue()
 
     def connect(self, ep_in=-1, ep_out=-1):
         if self.connected:
@@ -193,7 +197,7 @@ class SerialClass(DeviceClass):
             self.device.flushOutput()
         return self.device.flush()
 
-    def usbread(self, resplen=None, maxtimeout=0, timeout=0):
+    def usbread(self, resplen=None, maxtimeout=0, timeout=0, w_max_packet_size=None):
         # print("Reading {} bytes".format(resplen))
         if timeout == 0 and maxtimeout != 0:
             timeout = maxtimeout / 1000  # Some code calls this with ms delays, some with seconds.
@@ -209,14 +213,26 @@ class SerialClass(DeviceClass):
             return b""
         self.device.timeout = timeout
         epr = self.device.read
+        q = self.queue
         extend = res.extend
         bytestoread = resplen
-        while len(res) < bytestoread:
+        while bytestoread:
+            bytestoread = resplen - len(res) if len(res) < resplen else 0
+            if not q.empty():
+                data = q.get(bytestoread)
+                extend(data)
+            if bytestoread <= 0:
+                break
             try:
                 val = epr(bytestoread)
                 if len(val) == 0:
                     break
-                extend(val)
+                if len(val) > bytestoread:
+                    self.warning("Buffer overflow")
+                    q.put(val[bytestoread:])
+                    extend(val[:bytestoread])
+                else:
+                    extend(val)
             except Exception as e:
                 error = str(e)
                 if "timed out" in error:

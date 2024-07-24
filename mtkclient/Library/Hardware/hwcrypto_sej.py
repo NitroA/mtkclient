@@ -468,7 +468,7 @@ class Sej(metaclass=LogBase):
         self.reg.HACC_ACON|=acon_setting
         """
 
-    def sst_secure_algo_with_level(self, buf, encrypt=True, aes_top_legacy=True):
+    def sst_secure_algo_with_level(self, buf, encrypt=True, aes_top_legacy=True, legacyxor=True):
         seed = (CustomSeed[2] << 16) | (CustomSeed[1] << 8) | CustomSeed[0] | (CustomSeed[3] << 24)
         _iv = [seed, (~seed) & 0xFFFFFFFF, (((seed >> 16) | (seed << 16)) & 0xFFFFFFFF),
                (~((seed >> 16) | (seed << 16)) & 0xFFFFFFFF)]
@@ -502,11 +502,11 @@ class Sej(metaclass=LogBase):
             self.sej_aes_hw_init(attr, key, sej_param)
             for pos in range(3):
                 src = b"".join([int.to_bytes(val, 4, 'little') for val in self.g_CFG_RANDOM_PATTERN])
-                buf2 = self.sej_aes_hw_internal(src, encrypt=False, attr=attr, sej_param=sej_param)
+                buf2 = self.sej_aes_hw_internal(src, encrypt=False, attr=attr, sej_param=sej_param, legacy=legacyxor)
             attr = attr & 0xFFFFFFFA | 4
         else:
             self.sst_init(attr=attr, iv=_iv, keylen=key.key_len, mparam=sej_param, key=key.key)
-        buf2 = self.sej_aes_hw_internal(buf, encrypt=encrypt, attr=attr, sej_param=sej_param, legacy=False)
+        buf2 = self.sej_aes_hw_internal(buf, encrypt=encrypt, attr=attr, sej_param=sej_param, legacy=legacyxor)
         return buf2
 
     def sej_terminate(self):
@@ -557,7 +557,7 @@ class Sej(metaclass=LogBase):
         if legacy:
             self.reg.HACC_UNK |= 2
             # clear HACC_ASRC/HACC_ACFG/HACC_AOUT
-            self.reg.HACC_ACON2 = 0x40000000 | self.HACC_AES_CLR
+            self.reg.HACC_ACON2 |= 0x40000000
             i = 0
             while i < 20:
                 if self.reg.HACC_ACON2 > 0x80000000:
@@ -598,12 +598,12 @@ class Sej(metaclass=LogBase):
             self.reg.HACC_ACONK = 0
         return acon_setting
 
-    def hw_aes128_cbc_encrypt(self, buf, encrypt=True, iv=None):
+    def hw_aes128_cbc_encrypt(self, buf, encrypt=True, iv=None, legacy=False):
         if iv is None:
             iv = self.g_HACC_CFG_1
         self.tz_pre_init()
         self.info("HACC init")
-        self.SEJ_V3_Init(ben=encrypt, iv=iv)
+        self.SEJ_V3_Init(ben=encrypt, iv=iv, legacy=legacy)
         self.info("HACC run")
         buf2 = self.sej_run(buf)
         self.info("HACC terminate")
@@ -693,8 +693,8 @@ class Sej(metaclass=LogBase):
                 break
         return data
 
-    def sej_sec_cfg_hw(self, data, encrypt=True):
-        if encrypt:
+    def sej_sec_cfg_hw(self, data, encrypt=True, noxor=False):
+        if encrypt and not noxor:
             data = self.xor_data(bytearray(data))
         self.info("HACC init")
         self.SEJ_V3_Init(ben=encrypt, iv=self.g_HACC_CFG_1, legacy=True)
@@ -702,12 +702,12 @@ class Sej(metaclass=LogBase):
         dec = self.sej_run(data)
         self.info("HACC terminate")
         self.sej_terminate()
-        if not encrypt:
+        if not encrypt and not noxor:
             dec = self.xor_data(dec)
         return dec
 
-    def sej_sec_cfg_hw_V3(self, data, encrypt=True):
-        return self.hw_aes128_cbc_encrypt(buf=data, encrypt=encrypt)
+    def sej_sec_cfg_hw_V3(self, data, encrypt=True, legacy=False):
+        return self.hw_aes128_cbc_encrypt(buf=data, encrypt=encrypt, legacy=legacy)
 
     # seclib_get_msg_auth_key
     def generate_rpmb(self, meid, otp, derivedlen=32):
@@ -782,7 +782,7 @@ class Sej(metaclass=LogBase):
         self.sej_terminate()
         return dec
 
-    def generate_hw_meta(self, otp=None, encrypt=False, data=b""):
+    def generate_hw_meta(self, otp=None, encrypt=False, data=b"", legacy=False):
         """
         WR8                                                                         mt65
         LR9     CRC                 RC4                     AES128-CBC              SBC=OFF
@@ -800,7 +800,7 @@ class Sej(metaclass=LogBase):
         iv = [seed, (~seed) & 0xFFFFFFFF, (((seed >> 16) | (seed << 16)) & 0xFFFFFFFF),
               (~((seed >> 16) | (seed << 16)) & 0xFFFFFFFF)]
         self.info("HACC init")
-        self.SEJ_V3_Init(ben=encrypt, iv=iv)
+        self.SEJ_V3_Init(ben=encrypt, iv=iv, legacy=legacy)
         self.info("HACC run")
         dec = self.sej_run(data)
         self.info("HACC terminate")

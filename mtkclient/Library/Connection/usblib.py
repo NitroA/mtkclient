@@ -4,6 +4,7 @@
 import logging
 import os
 import sys
+from queue import Queue
 import usb.core  # pyusb
 import usb.util
 import time
@@ -127,6 +128,7 @@ class UsbClass(DeviceClass):
         self.EP_IN = None
         self.EP_OUT = None
         self.is_serial = False
+        self.queue = Queue()
         if sys.platform.startswith('freebsd') or sys.platform.startswith('linux') or sys.platform.startswith('darwin'):
             self.backend = usb.backend.libusb1.get_backend(find_library=lambda x: "libusb-1.0.so")
         elif sys.platform.startswith('win32'):
@@ -376,8 +378,8 @@ class UsbClass(DeviceClass):
                 self.EP_IN = usb.util.find_descriptor(itf,
                                                       # match the first OUT endpoint
                                                       custom_match=lambda xe: \
-                                                      usb.util.endpoint_direction(xe.bEndpointAddress) ==
-                                                      usb.util.ENDPOINT_IN)
+                                                          usb.util.endpoint_direction(xe.bEndpointAddress) ==
+                                                          usb.util.ENDPOINT_IN)
             self.connected = True
             return True
         print("Couldn't find CDC interface. Aborting.")
@@ -456,7 +458,7 @@ class UsbClass(DeviceClass):
     def get_write_packetsize(self):
         return self.EP_OUT.wMaxPacketSize
 
-    def usbread(self, resplen=None, maxtimeout=100):
+    def usbread(self, resplen=None, maxtimeout=100, w_max_packet_size=None):
         if resplen is None:
             resplen = self.maxsize
         if resplen <= 0:
@@ -465,19 +467,38 @@ class UsbClass(DeviceClass):
         timeout = 0
         loglevel = self.loglevel
         epr = self.EP_IN.read
-        w_max_packet_size = self.EP_IN.wMaxPacketSize
+        q = self.queue
+        b = self.buffer
+        if w_max_packet_size is None:
+            w_max_packet_size = self.EP_IN.wMaxPacketSize
         extend = res.extend
+        fast = self.fast
         buffer = None
         buflen = min(resplen, w_max_packet_size)
         if self.fast:
-            buffer = self.buffer[:buflen]
-        while len(res) < resplen:
+            buffer = b[:buflen]
+        bytestoread = resplen
+        while bytestoread > 0:
+            bytestoread = resplen - len(res) if len(res) < resplen else 0
+            if not q.empty():
+                extend(q.get(bytestoread))
+            if bytestoread <= 0:
+                break
+            sz = min(buflen, bytestoread)
             try:
-                if self.fast:
+                if fast:
                     rlen = epr(buffer, timeout)
+                    if rlen > sz:
+                        self.warning("Buffer overflow")
+                        q.put(buffer[rlen:])
+                        if self.loglevel == logging.DEBUG:
+                            self.warning(traceback.format_exc())
+                            self.warning(f"{rlen} vs {sz}")
+                            self.warning(buffer[sz:].hex())
+                            sys.stdout.flush()
                     extend(buffer[:rlen])
                 else:
-                    extend(epr(buflen))
+                    extend(epr(sz))
             except usb.core.USBError as e:
                 error = str(e.strerror)
                 if "timed out" in error:
@@ -489,6 +510,9 @@ class UsbClass(DeviceClass):
                 elif "Overflow" in error:
                     self.error("USB Overflow")
                     return b""
+                elif "No such device" in error:
+                    self.error("Device disconnected")
+                    sys.exit(1)
                 else:
                     self.info(repr(e))
                     return b""

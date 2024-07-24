@@ -6,7 +6,11 @@ import os
 from struct import pack, unpack
 from queue import Queue
 from threading import Thread
-from Cryptodome.Util.number import size
+
+from Cryptodome.Cipher import PKCS1_OAEP
+from Cryptodome.Hash import SHA256
+from Cryptodome.PublicKey import RSA
+from Cryptodome.Util.number import size, bytes_to_long
 from mtkclient.Library.DA.xml.xml_param import DataType, FtSystemOSE, LogLevel
 from mtkclient.Library.utils import logsetup, LogBase
 from mtkclient.Library.error import ErrorHandler
@@ -228,7 +232,7 @@ class DAXML(metaclass=LogBase):
                     bytestoread = length
                     while bytestoread > 0:
                         sz = min(usbepsz, bytestoread)
-                        data.extend(self.usbread(sz))
+                        data.extend(self.usbread(sz,w_max_packet_size=sz))
                         bytestoread -= sz
                     if len(data) == length:
                         return data
@@ -613,22 +617,21 @@ class DAXML(metaclass=LogBase):
                         self.info("SLA is disabled")
                     else:
                         self.info("SLA is enabled")
-                        self.dev_info = self.get_dev_info()
-                        found = False
+                        rsakey = None
                         for key in da_sla_keys:
                             if isinstance(key, SlaKey):
                                 if da2.find(bytes.fromhex(key.n)) != -1:
-                                    sla_signature = generate_da_sla_signature(data=self.dev_info["rnd"], key=key.key)
-                                    if self.handle_sla(data=sla_signature):
-                                        found = True
-                                        break
-                        if not found:
+                                    rsakey = key
+                        if rsakey is None:
                             print("No valid sla key found, using dummy auth ....")
                             sla_signature = b"\x00" * 0x100
-                            self.handle_sla(data=sla_signature)
-
-                else:
-                    self.error(res)
+                            if not self.handle_sla(data=sla_signature):
+                                print("SLA Key wasn't accepted.")
+                        else:
+                            self.dev_info = self.get_dev_info()
+                            sla_signature = generate_da_sla_signature(data=self.dev_info["rnd"], key=rsakey.key)
+                            if not self.handle_sla(data=sla_signature):
+                                print("SLA Key wasn't accepted.")
             if self.patch:
                 xmlcmd = self.Cmd.create_cmd("CUSTOM")
                 if self.xsend(xmlcmd):

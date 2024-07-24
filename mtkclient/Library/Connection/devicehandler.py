@@ -81,7 +81,7 @@ class DeviceClass(metaclass=LogBase):
     def usbwrite(self, data, pktsize=None):
         raise NotImplementedError()
 
-    def usbread(self, resplen=None, timeout=0):
+    def usbread(self, resplen=None, timeout=0, w_max_packet_size=None):
         raise NotImplementedError()
 
     def usbxmlread(self, maxtimeout=100):

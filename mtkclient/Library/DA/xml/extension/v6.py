@@ -268,8 +268,7 @@ class XmlFlashExt(metaclass=LogBase):
                     self.info("Patched Oppo Allowance flag.")
             else:
                 idx2 = find_binary(da2patched,
-                                   b"\xF0\x4D\x2D\xE9\x18\xB0\x8D\xE2\x82\xDF\x4D\xE2\x01\x60\xA0" +
-                                   b"\xE1\x38\x19\x0F\xE3\x00\x70\xA0\xE1\x42\x0F\x8D\xE2")
+                                   b"\xF0\x4D\x2D\xE9\x18\xB0\x8D\xE2\x82\xDF\x4D\xE2\x01\x60\xA0\xE1\x38\x19\x0F\xE3\x00\x70\xA0\xE1\x42\x0F\x8D\xE2")
                 if idx2 is not None:
                     da2patched[idx2:idx2 + 8] = b"\x00\x00\xA0\xE3\x1E\xFF\x2F\xE1"
                     self.info("Patched Vivo Remote SLA authentification.")
@@ -635,12 +634,14 @@ class XmlFlashExt(metaclass=LogBase):
             if rpartition.name == "seccfg":
                 partition = rpartition
                 seccfg_data = self.xflash.readflash(
-                    addr=partition.sector * self.mtk.daloader.daconfig.pagesize,
-                    length=partition.sectors * self.mtk.daloader.daconfig.pagesize,
+                    addr=partition.sector * guid_gpt.sectorsize,
+                    length=partition.sectors * guid_gpt.sectorsize,
                     filename="", parttype="user", display=False)
                 break
         if seccfg_data is None:
             return False, "Couldn't detect existing seccfg partition. Aborting unlock."
+        if seccfg_data.find(b"\x4D\x4D\x4D\x4D") == -1:
+            return False, "SecCfg is empty. Aborting unlock."
         if seccfg_data[:4] != pack("<I", 0x4D4D4D4D):
             return False, "Unknown seccfg partition header. Aborting unlock."
         hwc = self.cryptosetup()
@@ -693,7 +694,7 @@ class XmlFlashExt(metaclass=LogBase):
         if self.mtk.config.chipconfig.efuse_addr is not None:
             base = self.mtk.config.chipconfig.efuse_addr
             addr = base + 0x90
-            data = bytearray(self.mtk.daloader.peek_reg(addr=addr, length=0x20))
+            data = bytearray(self.mtk.daloader.peek_reg(addr=addr, length=0x30))
             return data
         return None
 
@@ -766,6 +767,8 @@ class XmlFlashExt(metaclass=LogBase):
             self.info(f"CID         : {cid}")
             retval["cid"] = cid
         if self.config.chipconfig.dxcc_base is not None:
+            # self.info("Generating provision key...")
+            # platkey, provkey = hwc.aes_hwcrypt(btype="dxcc", mode="prov")
             self.info("Generating dxcc rpmbkey...")
             rpmbkey = hwc.aes_hwcrypt(btype="dxcc", mode="rpmb")
             self.info("Generating dxcc mirpmbkey...")

@@ -60,7 +60,12 @@ class SecCfgV4(metaclass=LogBase):
                 if _hash == dec_hash:
                     self.hwtype = "V3"
                 else:
-                    return False
+                    dec_hash = self.hwc.sej.sej_sec_cfg_hw_V3(self.hash, False, legacy=True)
+                    if _hash == dec_hash:
+                        self.hwtype = "V4"
+                    else:
+                        return False
+
         """
         LKS_DEFAULT = 0x01
         LKS_MP_DEFAULT = 0x02
@@ -91,11 +96,13 @@ class SecCfgV4(metaclass=LogBase):
         dec_hash = hashlib.sha256(seccfg_data).digest()
         enc_hash = b""
         if self.hwtype == "SW":
-            enc_hash = self.hwc.sej.sej_sec_cfg_sw(dec_hash, True)
+            enc_hash = self.hwc.sej.sej_sec_cfg_sw(dec_hash, encrypt=True)
         elif self.hwtype == "V2":
-            enc_hash = self.hwc.sej.sej_sec_cfg_hw(dec_hash, True)
+            enc_hash = self.hwc.sej.sej_sec_cfg_hw(dec_hash, encrypt=True)
         elif self.hwtype == "V3":
-            enc_hash = self.hwc.sej.sej_sec_cfg_hw_V3(dec_hash, True)
+            enc_hash = self.hwc.sej.sej_sec_cfg_hw_V3(dec_hash, encrypt=True)
+        elif self.hwtype == "V4":
+            enc_hash = self.hwc.sej.sej_sec_cfg_hw_V3(dec_hash, encrypt=True, legacy=True)
         indata = seccfg_data + enc_hash
         while len(indata) % 0x200 != 0:
             indata += b"\x00"
@@ -199,14 +206,18 @@ class SecCfgV3(metaclass=LogBase):
         if self.magic != 0x4D4D4D4D or self.endflag != 0x45454545:
             self.error("Unknown V3 seccfg structure !")
             return False
-        err = self.hwc.sej.sej_sec_cfg_sw(self.data, False)
+        err = self.hwc.sej.sej_sec_cfg_sw(self.data, encrypt=False)
         if err[:4] not in [b"IIII", b"CCCC", b"\x00\x00\x00\x00"]:
-            err = self.hwc.sej.sej_sec_cfg_hw_V3(self.data, False)
+            err = self.hwc.sej.sej_sec_cfg_hw_V3(self.data, encrypt=False)
             if err[:4] not in [b"IIII", b"CCCC", b"\x00\x00\x00\x00"]:
-                err = self.hwc.sej.sej_sec_cfg_hw(self.data, False)
+                err = self.hwc.sej.sej_sec_cfg_hw(self.data, encrypt=False)
                 if err[:4] not in [b"IIII", b"CCCC", b"\x00\x00\x00\x00"]:
-                    self.error("Unknown V3 seccfg encryption !")
-                    return False
+                    err = self.hwc.sej.sej_sec_cfg_hw_V3(self.data, encrypt=False, legacy=True)
+                    if err[:4] not in [b"IIII", b"CCCC", b"\x00\x00\x00\x00"]:
+                        self.error("Unknown V3 seccfg encryption !")
+                        return False
+                    else:
+                        self.hwtype = "V4"
                 else:
                     self.hwtype = "V3"
             else:
@@ -267,11 +278,13 @@ class SecCfgV3(metaclass=LogBase):
         ed.write(self.seccfg_ext)
         indata = ed.getbuffer()
         if self.hwtype == "SW":
-            indata = self.hwc.sej.sej_sec_cfg_sw(indata, True)
+            indata = self.hwc.sej.sej_sec_cfg_sw(indata, encrypt=True)
         elif self.hwtype == "V2":
-            indata = self.hwc.sej.sej_sec_cfg_hw(indata, True)
+            indata = self.hwc.sej.sej_sec_cfg_hw(indata, encrypt=True)
         elif self.hwtype == "V3":
-            indata = self.hwc.sej.sej_sec_cfg_hw_V3(indata, True)
+            indata = self.hwc.sej.sej_sec_cfg_hw_V3(indata, encrypt=True)
+        elif self.hwtype == "V4":
+            indata = self.hwc.sej.sej_sec_cfg_hw_V3(indata, encrypt=True, legacy=True)
         else:
             return False, "Unknown error"
         wf.write(indata)
@@ -297,7 +310,7 @@ if __name__ == "__main__":
         sej_base = None
 
 
-    v3 = SecCfgV3(hwc, MTK)
-    v3.parse(data)
-    ret, newdata = v3.create("lock")
+    v4 = SecCfgV4(hwc, MTK)
+    v4.parse(data)
+    ret, newdata = v4.create("lock")
     print(newdata.hex())

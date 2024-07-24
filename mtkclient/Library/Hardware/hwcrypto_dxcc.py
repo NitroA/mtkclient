@@ -12,6 +12,14 @@ from Cryptodome.Cipher import AES
 from Cryptodome.Util import Counter
 from mtkclient.Library.utils import LogBase, logsetup
 
+Lcs = 0xA
+KceSet = 0xB
+Kce = 0xC                           # CodeEncryptionKey
+SASI_SB_HASH_BOOT_KEY_256B = 2      # 0x10
+SASI_SB_HASH_BOOT_KEY_1_128B = 1    # 0x14
+SASI_SW_VERSION_COUNTER1 = 1        # 0x18
+SASI_SW_VERSION_COUNTER2 = 2        # 0x19
+
 oem_pubk = "DACD8B5FDA8A766FB7BCAA43F0B16915" + \
            "CE7B47714F1395FDEBCF12A2D41155B0" + \
            "FB587A51FECCCB4DDA1C8E5EB9EB69B8" + \
@@ -1114,6 +1122,18 @@ class Dxcc(metaclass=LogBase):
         self.tzcc_clk(0)
         return rpmbkey
 
+    def sasi_bsv_socid_compute(self):
+        key = bytes.fromhex("49")
+        salt = b"\x00"*32
+        keylength = 0x10
+        self.tzcc_clk(1)
+        dstaddr = self.da_payload_addr - 0x300
+        pubkey = self.sasi_bsv_pubkey_hash_get(SASI_SB_HASH_BOOT_KEY_256B)
+        derivedkey = self.sbrom_key_derivation(1, key, salt, keylength, dstaddr)
+        hash = hashlib.sha256(pubkey+derivedkey).digest()
+        self.tzcc_clk(0)
+        return hash
+
     def generate_rpmb_mitee(self):
         rpmb_ikey = bytes.fromhex("AD1AC6B4BDF4EDB7")
         rpmb_salt = bytes.fromhex("69EF6584")
@@ -1124,37 +1144,120 @@ class Dxcc(metaclass=LogBase):
         self.tzcc_clk(0)
         return rpmbkey
 
-    def salt_func(self, value):
+    def sasi_bsv_otp_word_read(self, otpAddress):
+        if otpAddress>0x24:
+            return None
         while True:
             val = self.read32(self.dxcc_base + (0x2AF * 4)) & 1
             if val != 0:
                 break
-        self.write32(self.dxcc_base + (0x2A9 * 4), (4 * value) | 0x10000)
+        self.write32(self.dxcc_base + (0x2A9 * 4), (4 * otpAddress) | 0x10000)
         while True:
-            val = self.read32(self.dxcc_base + (0x2AD * 4)) << 31
+            val = self.read32(self.dxcc_base + (0x2AD * 4)) & 1
             if val != 0:
                 break
         res = self.read32(self.dxcc_base + (0x2AB * 4))
         return res
+
+    def sasi_bsv_lcs_get(self):
+        while True:
+            val = self.read32(self.dxcc_base + (0x2AF * 4)) & 1
+            if val != 0:
+                break
+        lcs = self.read32(self.dxcc_base + (0x2B5 * 4))
+        if lcs != 1:
+            if lcs != 5:
+                return 0
+            if self.read32(self.dxcc_base + (0x2B5 * 4)) & 0x100 != 0:
+                return 0xB000002
+            otp_word = self.sasi_bsv_otp_word_read(0xA)
+            if self.read32(self.dxcc_base + (0x2B5 * 4)) & 0x100 != 0:
+                if otp_word & 0xF0000 != 0x30000:
+                    return 0xB000080
+        if self.read32(self.dxcc_base + (0x2B5 * 4)) & 0x200 == 0:
+            return 0
+        return 0xB000003
+
+    def sasi_bsv_pub_key_hash_get(self, keyindex=SASI_SB_HASH_BOOT_KEY_256B):
+        if keyindex == SASI_SB_HASH_BOOT_KEY_256B:
+            start = 0x10
+            length = 0x8
+        elif keyindex == SASI_SB_HASH_BOOT_KEY_1_128B:
+            start = 0x14
+            length = 0x4
+        else:
+            return None
+        hashval = bytearray()
+        for idx in range(start,start+length,0x1):
+            hashval.extend(int.to_bytes(self.sasi_bsv_otp_word_read(idx),4,'little'))
+        return hashval
+
+    def sbrom_decrypt_kcst(self):
+        pdesc = hw_desc_init()
+        pdesc[0] = 0
+        pdesc[1] = 0x3FFC000
+        pdesc[2] = 0
+        pdesc[3] = 0
+        pdesc[4] = 0
+        pdesc[5] = 0
+        self.sasi_sb_adddescsequence(pdesc)
+        self.sb_hal_wait_desc_completion()
+
+    def sbrom_aeslockenginekey(self):
+        pdesc = hw_desc_init()
+        pdesc[0] = 0
+        pdesc[1] = 0x8000081
+        pdesc[2] = 0
+        pdesc[3] = 0
+        pdesc[4] = 0x4801C20
+        pdesc[5] = 0
+        self.sasi_sb_adddescsequence(pdesc)
+        self.sb_hal_wait_desc_completion()
+
+    def sasi_bsv_customer_key_decrypt(self):
+        plat_key = b"KEY PLAT"
+        dstaddr = self.da_payload_addr - 0x300
+        salt = self.sasi_bsv_pub_key_hash_get(keyindex=SASI_SB_HASH_BOOT_KEY_256B)
+        platkey = self.sbrom_key_derivation(HwCryptoKey.PLATFORM_KEY, plat_key, salt, 0x10, dstaddr)
+        while True:
+            val = self.read32(self.dxcc_base + 0xAF4) & 1
+            if val != 0:
+                break
+        self.sbrom_decrypt_kcst()
+        while True:
+            val = self.read32(self.dxcc_base + 0xAF0) & 1
+            if val != 0:
+                break
+        self.write32(self.dxcc_base + 0xAC0, 0)
+        self.write32(self.dxcc_base + 0xAC4, 0)
+        self.write32(self.dxcc_base + 0xAC8, 0)
+        self.write32(self.dxcc_base + 0xACC, 0)
+        self.sbrom_aeslockenginekey()
+
+    def sasi_bsv_security_disable(self):
+        lcs = self.sasi_bsv_lcs_get()
+        if lcs == 7:
+            return
+        self.write32(self.dxcc_base + 0xAC0, 0)
+        self.write32(self.dxcc_base + 0xAC4, 0)
+        self.write32(self.dxcc_base + 0xAC8, 0)
+        self.write32(self.dxcc_base + 0xACC, 0)
+        self.write32(self.dxcc_base + 0xAD8, 1)
 
     def generate_provision_key(self):
         plat_key = b"KEY PLAT"
         prov_key = b"PROVISION KEY"
         self.tzcc_clk(1)
         dstaddr = self.da_payload_addr - 0x300
-
-        salt = hashlib.sha256(bytes.fromhex(oem_pubk)).digest()
-        """
-        salt = bytearray(b"\x00"*0x20)
-        for i in range(8):
-            salt[i*4]=self.salt_func(0x10+i)
-        """
-        provkey = self.sbrom_key_derivation(HwCryptoKey.PROVISIONING_KEY, plat_key, salt, 0x10, dstaddr)
+        lcs = self.sasi_bsv_lcs_get()
+        #salt = hashlib.sha256(bytes.fromhex(oem_pubk)).digest()
+        salt = self.sasi_bsv_pub_key_hash_get(keyindex=SASI_SB_HASH_BOOT_KEY_256B)
+        platkey = self.sbrom_key_derivation(HwCryptoKey.PLATFORM_KEY, plat_key, salt, 0x10, dstaddr)
         while True:
             val = self.read32(self.dxcc_base + 0xAF4) & 1
             if val != 0:
                 break
-        platkey = self.sbrom_key_derivation(HwCryptoKey.PLATFORM_KEY, prov_key, salt, 0x10, dstaddr)
+        provkey = self.sbrom_key_derivation(HwCryptoKey.PROVISIONING_KEY, prov_key, salt, 0x10, dstaddr)
         self.write32(self.dxcc_base + 0xAC0, 0)
         self.write32(self.dxcc_base + 0xAC4, 0)
         self.write32(self.dxcc_base + 0xAC8, 0)
@@ -1183,7 +1286,7 @@ class Dxcc(metaclass=LogBase):
 
     def sbrom_key_derivation(self, aeskeytype, label, salt, requestedlen, destaddr):
         result = bytearray()
-        if aeskeytype - 1 > 4 or (1 << (aeskeytype - 1) & 0x17) == 0:
+        if aeskeytype <= HwCryptoKey.PLATFORM_KEY or (1 << (aeskeytype - 1) & 0x17) == 0:
             return 0xF2000002
         if requestedlen > 0xFF or (requestedlen << 28) & 0xFFFFFFFF:
             return 0xF2000003

@@ -42,6 +42,13 @@ class ArgHandler(metaclass=LogBase):
                 config.pid = getint(args.pid)
         except AttributeError:
             pass
+        config.stock = True
+        try:
+            if args.stock is not None:
+                config.stock = args.stock
+        except AttributeError:
+            pass
+
         config.reconnect = True
         try:
             if args.noreconnect is not None:

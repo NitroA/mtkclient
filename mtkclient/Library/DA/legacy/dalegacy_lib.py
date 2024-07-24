@@ -809,6 +809,8 @@ class DALegacy(metaclass=LogBase):
             res = self.usbread(1)
             if res == self.Rsp.ACK:
                 speed = self.usbread(1)
+                if speed[0] > 0:
+                    self.mtk.port.cdc.set_fast_mode(True)
                 return speed
         return None
 
@@ -1099,7 +1101,7 @@ class DALegacy(metaclass=LogBase):
                 size = bytestoread
                 if bytestoread > packetsize:
                     size = packetsize
-                tmp = self.usbread(size)
+                tmp = self.usbread(size, w_max_packet_size=size)
                 rq.put(tmp[:size])
                 bytestoread -= size
                 curpos += size
@@ -1124,8 +1126,8 @@ class DALegacy(metaclass=LogBase):
                 size = bytestoread
                 if bytestoread > packetsize:
                     size = packetsize
-                buffer.extend(self.usbread(size))
-                bytestoread -= size
+                buffer.extend(self.usbread(size, w_max_packet_size=size))
+                bytestoread = len(buffer)-length
                 checksum = unpack(">H", self.usbread(2))[0]
                 self.debug("Checksum: %04X" % checksum)
                 self.usbwrite(self.Rsp.ACK)

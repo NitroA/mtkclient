@@ -61,7 +61,7 @@ class HwCrypto(metaclass=LogBase):
                     return self.sej.hw_aes128_cbc_encrypt(buf=data, encrypt=True)
                 elif mode == "sst":
                     self.sej.sej_base = 0xC0016000
-                    data2 = self.sej.generate_hw_meta(encrypt=True, data=data)
+                    data2 = self.sej.generate_hw_meta(encrypt=True, data=data, legacy=False)
                     data3 = self.sej.sst_secure_algo_with_level(buf=data, encrypt=True)
                     print(data2.hex())
                     print(data3.hex())

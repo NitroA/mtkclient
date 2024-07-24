@@ -92,9 +92,15 @@ def main():
                 with open(loader, "rb") as rf:
                     rf.seek(mbuf)
                     data = rf.read(m_len)
+                    test = data.find(b"\x01\x01\x54\xE3\x01\x14\xA0\xE3")
+                    if test != -1:
+                        print("V6 Device is patched against carbonara :(")
                     test=data.find(b"\x08\x00\xa8\x52\xff\x02\x08\xeb")
                     if test != -1:
-                        print("Device is patched against carbonara :(")
+                        print("V6 Device is patched against carbonara :(")
+                    test2=data.find(b"\x06\x9B\x4F\xF0\x80\x40\x02\xA9")
+                    if test2 != -1:
+                        print("V5 Device is patched against carbonara :(")
                     hashidx = data.find(int.to_bytes(0xC0070004, 4, 'little'))
                     if hashidx != -1:
                         print("Hash check found.")
@@ -111,7 +117,11 @@ def main():
                                 if hashidx is not None:
                                     print("Hash check 4 (V6) found.")
                                 else:
-                                    print("HASH ERROR !!!!")
+                                    hashidx = find_binary(data,b"\x01\x10\x81\xE2\x00\x00\x51\xE1")
+                                    if hashidx is not None:
+                                        print("Hash check 5 (V6) found.")
+                                    else:
+                                        print("HASH ERROR !!!!")
 
                     fname = os.path.join("loaders",
                                          hex(da[0]["hw_code"])[2:] + "_" + hex(startaddr)[2:] + os.path.basename(

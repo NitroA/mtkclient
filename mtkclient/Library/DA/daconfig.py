@@ -256,6 +256,8 @@ class DAconfig(metaclass=LogBase):
                 if loader.hw_version <= self.config.hwver:
                     if loader.sw_version <= self.config.swver:
                         if self.da_loader is None:
+                            if loader.v6:
+                                self.config.chipconfig.damode = DAmodes.XML
                             self.da_loader = loader
                             self.loader = loader.loader
         if self.da_loader is None and dacode != 0x6261:
