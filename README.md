@@ -61,6 +61,7 @@ pip3 install .
 ```
 
 #### Install rules
+Follow M0Rf30's .[instructions](https://github.com/M0Rf30/android-udev-rules) or execute the following commands:
 ```
 sudo usermod -a -G plugdev $USER
 sudo usermod -a -G dialout $USER
