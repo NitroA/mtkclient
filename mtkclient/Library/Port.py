@@ -136,6 +136,7 @@ class Port(metaclass=LogBase):
             try:
                 if maxtries is not None and counter == maxtries:
                     break
+                counter += 1
                     self.cdc.connect() 
                     ep_out = self.cdc.EP_OUT.write
                     ep_in = self.cdc.EP_IN.read
