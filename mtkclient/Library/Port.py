@@ -169,7 +169,7 @@ class Port(metaclass=LogBase):
             except Exception as serr:
                 if "access denied" in str(serr):
                     self.warning(str(serr))
-                self.debug(str(serr))
+                # self.debug(str(serr))
                 pass
         return False
 
