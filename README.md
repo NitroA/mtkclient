@@ -141,6 +141,17 @@ pip3 install -r requirements.txt
     Click on the "Install" button to begin the installation.
     Follow the prompts to complete the installation.
     Restart your computer if required.
+    
+###### If you got error Preloader - [LIB]: Status: Handshake failed, retrying : 
+```
+you just disble disable driver signature
+Tutorial: 
+1.Open Start.
+2.Search for Command Prompt, right-click the top result, and select the Run as administrator option.
+3.Type the following command to disable driver signature enforcement on Windows 10 and press Enter:bcdedit /set nointegritychecks on
+4.Restart your computer.
+```
+Source: [here](https://blog.griffin-unlocker.com/2023/06/28/disable-driver-signature-enforcement-all-windows-guide/)
 
 ---------------------------------------------------------------------------------------------------------------
 ### Use kamakiri (optional, only needed for mt6260 or older)
